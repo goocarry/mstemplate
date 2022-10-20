@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/goocarry/mstemplate/handlers"
+	"github.com/gorilla/mux"
 	"github.com/nicholasjackson/env"
 )
 
@@ -23,9 +24,23 @@ func main() {
 	// create the handlers
 	ph := handlers.NewProducts(l)
 
+	// replaced by gorilla nux
 	// create a new serve mux and register the handlers
-	sm := http.NewServeMux()
-	sm.Handle("/", ph)
+	// sm := http.NewServeMux()
+	
+	sm := mux.NewRouter()
+	
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/", ph.GetProducts)
+	
+	putRouter := sm.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
+	putRouter.Use(ph.MiddlewareProductValidation)
+	
+	postRouter := sm.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/", ph.AddProduct)
+	postRouter.Use(ph.MiddlewareProductValidation)
+	
 
 	// create a new server
 	s := http.Server{
