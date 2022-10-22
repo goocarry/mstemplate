@@ -1,3 +1,16 @@
+// Package handlers classification of Product API
+//
+// # Documentation for Product API
+//
+// Schemes: http
+// BasePath: /
+//
+// Consumes:
+// -application/json
+//
+// Produces:
+// - application/json
+// swagger:meta
 package handlers
 
 import (
@@ -5,11 +18,28 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/goocarry/mstemplate/data"
-	"github.com/gorilla/mux"
 )
+
+// A list of products returns in the response
+// swagger:response productsResponse
+type productsResponseWrapper struct {
+	// All products in the system
+	// in: body
+	Body []data.Product
+}
+
+// swagger:response noContent
+type productsNoContent struct {}
+
+// swagger:parameters deleteProduct
+type productIDParameterWrapper struct {
+	// The id of the product to delete from the database
+	// in: path
+	// required: true
+	ID int `json:"id"`
+}
 
 // Products is a http.Handler
 type Products struct {
@@ -70,55 +100,8 @@ func NewProducts(l *log.Logger) *Products {
 // 	rw.WriteHeader(http.StatusMethodNotAllowed)
 // }
 
-// GetProducts returns the products from the data store
-func (p *Products) GetProducts(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle GET Products")
 
-	// fetch the products from the datastore
-	lp := data.GetProducts()
 
-	// serialize the list to JSON
-	err := lp.ToJSON(rw)
-	if err != nil {
-		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
-	}
-}
-
-// AddProduct ...
-func (p *Products) AddProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle POST Products")
-
-	prod := r.Context().Value(KeyProduct{}).(data.Product)
-	p.l.Printf("Prod: %#v", prod)
-
-	data.AddProduct(&prod)
-}
-
-// UpdateProduct ...
-func (p *Products) UpdateProduct(rw http.ResponseWriter, r *http.Request) {
-	p.l.Println("Handle PUT Products")
-
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"]) 
-	if err != nil {
-		http.Error(rw, "Unable to convert id", http.StatusBadRequest) 
-		return
-	}
-
-	p.l.Printf("Prod: %#v", id)
-	prod := r.Context().Value(KeyProduct{}).(data.Product)
-
-	err = data.UpdateProduct(id, &prod)
-	if err == data.ErrProductNotFound {
-		http.Error(rw, "Product not found", http.StatusNotFound)
-		return 
-	}
-
-	if err != nil {
-		http.Error(rw, "Something went wrong", http.StatusInternalServerError)
-		return 
-	}
-}
 
 // KeyProduct ...
 type KeyProduct struct {}
