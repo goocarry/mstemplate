@@ -6,8 +6,11 @@ definitions:
         description: Product defines the structure for an API product
         x-go-package: github.com/goocarry/mstemplate/data
 info:
-    description: '# Documentation for Product API'
-    title: classification of Product API
+    description: Documentation for Product API
+    title: |-
+        ...
+        Package classification of Product API
+    version: 1.0.0
 paths:
     /products:
         get:
@@ -16,12 +19,14 @@ paths:
             responses:
                 "200":
                     $ref: '#/responses/productsResponse'
+            tags:
+                - products
     /products/{id}:
         delete:
             description: Deletes product from productList
             operationId: deleteProduct
             parameters:
-                - description: The id of the product to delete from the database
+                - description: The id of the product for which the operation relates
                   format: int64
                   in: path
                   name: id
@@ -30,14 +35,44 @@ paths:
                   x-go-name: ID
             responses:
                 "201":
-                    $ref: '#/responses/noContent'
+                    $ref: '#/responses/noContentResponse'
+                "404":
+                    $ref: '#/responses/errorResponse'
+                "501":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
+        get:
+            description: Return single product
+            operationId: listSingleProduct
+            parameters:
+                - description: The id of the product for which the operation relates
+                  format: int64
+                  in: path
+                  name: id
+                  required: true
+                  type: integer
+                  x-go-name: ID
+            responses:
+                "200":
+                    $ref: '#/responses/productResponse'
+                "400":
+                    $ref: '#/responses/errorResponse'
+            tags:
+                - products
 produces:
     - application/json
 responses:
-    noContent:
-        description: ""
+    errorResponse:
+        description: Generic error message returned as a string
+    errorValidation:
+        description: Validation errors defined as an array of strings
+    noContentResponse:
+        description: No content is returned by this API endpoint
+    productResponse:
+        description: Data structure representing a single product
     productsResponse:
-        description: A list of products returns in the response
+        description: A list of products
         schema:
             items: {}
             type: array

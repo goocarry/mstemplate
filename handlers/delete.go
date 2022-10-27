@@ -8,10 +8,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// swagger:route DELETE /products/{id} deleteProduct
+// swagger:route DELETE /products/{id} products deleteProduct
 // Deletes product from productList
 // responses:
-//   201: noContent
+// 	201: noContentResponse
+// 	404: errorResponse
+//	501: errorResponse
 
 // DeleteProduct deletes a product from productList
 func (p *Products) DeleteProduct(rw http.ResponseWriter, r *http.Request) {

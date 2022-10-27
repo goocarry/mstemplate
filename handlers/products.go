@@ -1,136 +1,57 @@
-// Package handlers classification of Product API
-//
-// # Documentation for Product API
-//
-// Schemes: http
-// BasePath: /
-//
-// Consumes:
-// -application/json
-//
-// Produces:
-// - application/json
-// swagger:meta
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/goocarry/mstemplate/data"
+	"github.com/gorilla/mux"
 )
 
-// A list of products returns in the response
-// swagger:response productsResponse
-type productsResponseWrapper struct {
-	// All products in the system
-	// in: body
-	Body []data.Product
-}
+// KeyProduct is a key used for the Product object in the context
+type KeyProduct struct {}
 
-// swagger:response noContent
-type productsNoContent struct {}
-
-// swagger:parameters deleteProduct
-type productIDParameterWrapper struct {
-	// The id of the product to delete from the database
-	// in: path
-	// required: true
-	ID int `json:"id"`
-}
-
-// Products is a http.Handler
+// Products handler for getting and updating products
 type Products struct {
 	l *log.Logger
+	v *data.Validation
 }
 
 // NewProducts creates a products handler with the given logger
-func NewProducts(l *log.Logger) *Products {
-	return &Products{l}
+func NewProducts(l *log.Logger, v *data.Validation) *Products {
+	return &Products{l: l, v: v}
+}
+
+// ErrInvalidProductPath is an error message when the product path is not valid
+var ErrInvalidProductPath = fmt.Errorf("Invalid Path, path should be /products/[id]")
+
+// GenericError is a generic error message returned by a server
+type GenericError struct {
+	Message string `json:"message"`
+}
+
+// ValidationError is a collection of validation error messages
+type ValidationError struct {
+	Messages []string `json:"messages"`
 }
 
 
-// Replace all of the code below by gorilla mux
-// ServeHTTP is the main entry point for the handler and staisfies the http.Handler
-// interface
-// func (p *Products) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
-// 	// handle the request for a list of products
-// 	if r.Method == http.MethodGet {
-// 		p.getProducts(rw, r)
-// 		return
-// 	}
+// getProductID returns the product ID from the URL
+// Panics if cannot convert the id into an integer
+// this should never happen as the router ensures that
+// this is a valid number
+func getProductID(r *http.Request) int {
+	// parse the product if from the url
+	vars := mux.Vars(r)
 
-// 	if r.Method == http.MethodPost {
-// 		p.addProduct(rw, r)
-// 		return
-// 	}
+	// convert the id into an integer and return
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		// should never happen
+		panic(err)
+	}
 
-// 	if r.Method == http.MethodPut {
-// 		// expect the id in the URI
-// 		reg := regexp.MustCompile(`/([0-9]+)`)
-// 		g := reg.FindAllStringSubmatch(r.URL.Path, -1) 
-
-// 		if len(g) != 1 {
-// 			p.l.Println("Invalid URI more than one id")
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		if len(g[0]) != 2 {
-// 			p.l.Println("Invalid URI more than one capture group")
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return
-// 		}
-
-// 		idString := g[0][1]
-// 		id, err := strconv.Atoi(idString)
-// 		if err != nil {
-// 			p.l.Println("Invalid URI unable to convert to number")
-// 			http.Error(rw, "Invalid URI", http.StatusBadRequest)
-// 			return 
-// 		}
-// 		p.updateProduct(id, rw, r)
-
-// 	}
-
-// 	// catch all
-// 	// if no method is satisfied return an error
-// 	rw.WriteHeader(http.StatusMethodNotAllowed)
-// }
-
-
-
-
-// KeyProduct ...
-type KeyProduct struct {}
-
-// MiddlewareProductValidation ...
-func (p Products) MiddlewareProductValidation(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-
-		prod := data.Product{}
-
-		err := prod.FromJSON(r.Body)
-		if err != nil {
-			p.l.Println("[ERROR] deserializing product")
-			http.Error(rw, "Error reading product", http.StatusBadRequest) 
-			return
-		}
-
-		// validate the product
-		err = prod.Validate()
-		if err != nil {
-			p.l.Println("[ERROR] validating product")
-			http.Error(rw, fmt.Sprintf("Error validating product: %s", err) , http.StatusBadRequest) 
-			return
-		}
-
-
-		ctx := context.WithValue(r.Context(), KeyProduct{}, prod)
-		r =r.WithContext(ctx)
-	
-		next.ServeHTTP(rw, r)
-	})
+	return id
 }

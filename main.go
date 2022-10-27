@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/runtime/middleware"
+	"github.com/goocarry/mstemplate/data"
 	"github.com/goocarry/mstemplate/handlers"
 	"github.com/gorilla/mux"
 	"github.com/nicholasjackson/env"
@@ -21,27 +22,30 @@ func main() {
 	env.Parse()
 
 	l := log.New(os.Stdout, "products-api ", log.LstdFlags)
+	v := data.NewValidation()
 
 	// create the handlers
-	ph := handlers.NewProducts(l)
-
-	// replaced by gorilla nux
-	// create a new serve mux and register the handlers
-	// sm := http.NewServeMux()
+	ph := handlers.NewProducts(l, v)
 	
+	// create a new serve mux and register the handlers
 	sm := mux.NewRouter()
 	
 	getRouter := sm.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/", ph.GetProducts)
+	getRouter.HandleFunc("/products", ph.ListAll)
+	getRouter.HandleFunc("/products/{id:[0-9]+}", ph.ListSingle)
 	
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/{id:[0-9]+}", ph.UpdateProduct)
-	putRouter.Use(ph.MiddlewareProductValidation)
+	putRouter.Use(ph.MiddlewareValidateProduct)
 	
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/", ph.AddProduct)
-	postRouter.Use(ph.MiddlewareProductValidation)
+	postRouter.Use(ph.MiddlewareValidateProduct)
+
+	deleteRouter := sm.Methods(http.MethodDelete).Subrouter()
+	deleteRouter.HandleFunc("products/{id:[0-9]+}", ph.DeleteProduct)
 	
+	// handler for documentation
 	opts := middleware.RedocOpts{SpecURL: "/swagger.yaml"}
 	sh := middleware.Redoc(opts, nil)
 
@@ -79,7 +83,6 @@ func main() {
 	log.Println("Got signal:", sig)
 
 	// gracefully shutdown the server, waiting max 30 seconds for current operations to complete
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
+	ctx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	s.Shutdown(ctx)
 }

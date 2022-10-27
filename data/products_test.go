@@ -9,7 +9,8 @@ func TestCheckValidation(t *testing.T) {
 		SKU: "abs-abs-abs",
 	}
 
-	err := p.Validate()
+	v:= NewValidation()
+	err := v.Validate(p)
 	
 	if err != nil {
 		t.Fatal(err)
