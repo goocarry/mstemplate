@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/goocarry/mstemplate/currency/protos/currency"
 	"github.com/goocarry/mstemplate/data"
 	"github.com/gorilla/mux"
 )
@@ -17,11 +18,12 @@ type KeyProduct struct {}
 type Products struct {
 	l *log.Logger
 	v *data.Validation
+	cc currency.CurrencyClient
 }
 
 // NewProducts creates a products handler with the given logger
-func NewProducts(l *log.Logger, v *data.Validation) *Products {
-	return &Products{l: l, v: v}
+func NewProducts(l *log.Logger, v *data.Validation, cc currency.CurrencyClient) *Products {
+	return &Products{l: l, v: v, cc: cc}
 }
 
 // ErrInvalidProductPath is an error message when the product path is not valid
